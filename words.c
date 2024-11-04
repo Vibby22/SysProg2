@@ -7,24 +7,68 @@
 #include <sys/stat.h>
 #include <string.h>
 
-int countWords(int fileDesc, const char *filename) {
-    int words = 0;
-    char current;
-    int inWord = 0;
+#define VALIDCHAR(current) ((strcmp(current, "'") == 0 && isalpha(current+1)!=0) || isalpha(current)!=0)
 
-    while (read(fileDesc, &current, 1) == 1) {
-        if (isspace(current)) {
-            inWord = 0;
-        } else {
-            if (!inWord) {
-                words++;
-                inWord = 1;
+struct word
+{
+    char* str;
+    int count = 0;
+    word *next;
+};
+
+wordObj* countWords(int fileDesc, const char *filename)
+{
+    char current;
+    wordObj *head;
+    wordObj *temp = head;
+    
+    while (read(fileDesc, &current, 1) == 1) 
+    {
+        int wordSize = 1;
+        char *str = calloc(2, wordSize+1);
+        
+       //check for valid first char, else reiterate loop
+        if(VALIDCHAR(current))
+        {
+            str[0] = current;
+        }
+        else
+            continue;
+
+        //add each character to string
+        while ((read(fileDesc, &current, 1) == 1) && (strcmp(current, "-") == 0 || VALIDCHAR(current)))
+        {
+            if((strcmp(current,"-") == 0 && (isalpha(current-1) != 0 && isalpha(current+1) != 0)) || VALIDCHAR(current))
+            {
+                wordSize++;
+                char *tempStr = realloc(str, wordSize+1);
+                strncat(tempStr, current, 1);
             }
+            else
+                break;
+        }
+        if(head == NULL)
+        {
+            temp->word = str;
+            temp->count++;
+        }
+        else
+        {
+            wordObj *iter = head;
+            while(iter != NULL)
+            {
+                if(strcmp(iter->str, str) == 0)
+                {
+                    iter->count++;
+                    break;
+                }
+                iter = iter->next;
+            }
+            iter->next->str = str;
+            iter->next->count++;
         }
     }
-
-    printf("Word count for %s: %d\n", filename, words);
-    return 0;
+    return head;
 }
 
 void processFile(const char *filePath) {
