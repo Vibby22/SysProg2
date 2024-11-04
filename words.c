@@ -32,7 +32,7 @@ int compareWords(const void *a, const void *b)
 struct wordObj* countWords(int fileDesc, const char *filename)
 {
     char current;
-    struct wordObj *list = (wordObj*)malloc(sizeof(struct wordObj));
+    struct wordObj *list = malloc(sizeof(struct wordObj));
     int listSize = 0;
     
     while (read(fileDesc, &current, 1) == 1) 
@@ -73,8 +73,8 @@ struct wordObj* countWords(int fileDesc, const char *filename)
         //if list is empty
         if(list == NULL)
         {
-            list.str = str;
-            list.count = 1;
+            list[listSize-1].str = str;
+            list[listSize-1].count = 1;
             listSize++;
         }
 
