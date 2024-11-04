@@ -123,7 +123,7 @@ void processFile(const char *filePath) {
         return;
 
     listSize = 0;
-    while(list[listSize]!=NULL)
+    while(struct wordObj list[listSize]!=NULL)
     {
         listSize++;
     }
@@ -133,7 +133,7 @@ void processFile(const char *filePath) {
     for(int i=0;i<listSize; i++)
     {
         printf("%s: %d\n", list[i].str, list[i].count);
-        free list[i].str;
+        free struct wordObj list[i].str;
     }
 
     printf("%d distinct words.\n", listSize);
