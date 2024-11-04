@@ -15,6 +15,20 @@ struct wordObj
     int count;
 };
 
+int compareWords(const void *a, const void *b) 
+{
+    const struct wordObj *wordA = (const struct wordObj *)a;
+    const struct wordObj *wordB = (const struct wordObj *)b;
+
+    // Sort by count in descending order
+    if (wordA->count != wordB->count) {
+        return wordB->count - wordA->count; // Descending order
+    }
+
+    // If counts are the same, sort by str lexicographically
+    return strcmp(wordA->str, wordB->str);
+}
+
 wordObj* countWords(int fileDesc, const char *filename)
 {
     char current;
@@ -101,8 +115,21 @@ void processFile(const char *filePath) {
         return;
     }
 
+    int listSize;
+    
     wordObj *list = countWords(fileDesc, filePath);
     close(fileDesc);
+    if(list == NULL)
+        return;
+
+    listSize = sizeof(list)/sizeof(wordObj);
+    qsort(list, listSize, sizeof(struct wordObj), compareWords);
+    
+    for(int i=0;i<listSize; i++)
+        printf("%s: %d\n", list.str, list.count);
+
+    printf("%d distinct words.\n", listSize);
+    free(list);
 }
 
 void processDirectory(const char *dirPath) {
