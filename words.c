@@ -73,8 +73,8 @@ struct wordObj* countWords(int fileDesc, const char *filename)
         //if list is empty
         if(list == NULL)
         {
-            list[listSize-1].str = str;
-            list[listSize-1].count = 1;
+            list[0].str = str;
+            list[0].count = 1;
             listSize++;
         }
 
@@ -86,8 +86,8 @@ struct wordObj* countWords(int fileDesc, const char *filename)
                 if(strcmp(list[i].str, str) == 0)
                 {
                     list[i].count++;
-                    break;
                     free(str);
+                    break;
                 }
             }
             // no identical words
@@ -122,11 +122,19 @@ void processFile(const char *filePath) {
     if(list == NULL)
         return;
 
-    listSize = sizeof(list)/sizeof(struct wordObj);
+    listSize = 0;
+    while(list[listSize]!=NULL)
+    {
+        listSize++;
+    }
+    
     qsort(list, listSize, sizeof(struct wordObj), compareWords);
     
     for(int i=0;i<listSize; i++)
+    {
         printf("%s: %d\n", list[i].str, list[i].count);
+        free list[i].str;
+    }
 
     printf("%d distinct words.\n", listSize);
     free(list);
