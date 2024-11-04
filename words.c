@@ -47,11 +47,18 @@ wordObj* countWords(int fileDesc, const char *filename)
             else
                 break;
         }
+        //last char of string is NULL
+        str[wordSize] = NULL;
+
+        //creating linkedlist
+        //if list is empty
         if(head == NULL)
         {
             temp->word = str;
             temp->count++;
         }
+
+        //check for repeat words
         else
         {
             wordObj *iter = head;
