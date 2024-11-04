@@ -122,11 +122,11 @@ void processFile(const char *filePath) {
     if(list == NULL)
         return;
 
-    listSize = sizeof(list)/sizeof(wordObj);
+    listSize = sizeof(list)/sizeof(struct wordObj);
     qsort(list, listSize, sizeof(struct wordObj), compareWords);
     
     for(int i=0;i<listSize; i++)
-        printf("%s: %d\n", list.str, list.count);
+        printf("%s: %d\n", list[i].str, list[i].count);
 
     printf("%d distinct words.\n", listSize);
     free(list);
