@@ -7,20 +7,19 @@
 #include <sys/stat.h>
 #include <string.h>
 
-#define VALIDCHAR(current) ((strcmp(current, "\'") == 0 && isalpha(current+1)!=0) || isalpha(current)!=0)
+#define VALIDCHAR(current) (current == '\'' && isalpha(*(&current+1))!=0) || isalpha(current)!=0)
 
 struct wordObj
 {
     char* str;
     int count;
-    wordObj *next;
 };
 
 wordObj* countWords(int fileDesc, const char *filename)
 {
     char current;
-    wordObj *head = (wordObj*)malloc(sizeof(wordObj));
-    wordObj *temp = head;
+    wordObj *list = (wordObj*)malloc(sizeof(wordObj));
+    int listSize = 0;
     
     while (read(fileDesc, &current, 1) == 1) 
     {
@@ -38,7 +37,7 @@ wordObj* countWords(int fileDesc, const char *filename)
         //add each character to string
         while ((read(fileDesc, &current, 1) == 1) && (current == '-' || VALIDCHAR(current)))
         {
-            if((current == '-' && (isalpha(current-1) != 0 && isalpha(current+1) != 0)) || VALIDCHAR(current))
+            if((current == '-' && (isalpha(*(&current-1)) != 0 && isalpha(*(&current+1)) != 0)) || VALIDCHAR(current))
             {
                 wordSize++;
                 char *tempStr = realloc(str, wordSize+1);
@@ -47,53 +46,52 @@ wordObj* countWords(int fileDesc, const char *filename)
                 if(tempStr == NULL)
                 {
                     free(str);
-                    break;
+                    perror("Allocation failed.");
+                    return NULL;
                 }
                 str = tempStr;
                 str[wordSize-1] = current;
             }
-            else
-                break;
         }
         //last char of string is NULL
         str[wordSize] = '\0';
 
-        //creating linkedlist
         //if list is empty
-        if(head == NULL)
+        if(list == NULL)
         {
-            temp->word = str;
-            temp->count = 1;
+            list.str = str;
+            list.count = 1;
+            listSize++;
         }
 
-        //check for repeat words
+        // list is not empty, traverse for identical words
         else
         {
-            wordObj *iter = head;
-            while(iter != NULL)
+            for(int i=0; i<listSize; i++)
             {
-                if(strcmp(iter->str, str) == 0)
+                if(strcmp(list[i].str, str) == 0)
                 {
-                    iter->count++;
+                    list[i].count++;
                     break;
+                    free(str);
                 }
-                    
-                else
-                iter = iter->next;
             }
-            
-            //at the end of the list
-            if(iter==NULL)
+            // no identical words
+            wordObj *temp = realloc(list, sizeof(wordObj)*(listSize+1));
+            if(temp == NULL)
             {
-                wordObj *w = (wordObj*)malloc(sizeof(wordObj));
-                w->str = str;
-                w->count = 1;
-                w->next = NULL;
-                iter = w;
+                free(list);
+                free(str);
+                perror("Allocation failed");
+                return NULL;
             }
+
+            list = temp;
+            list[listSize].str = str;
+            list[listSize].count = 1;
         }
     }
-    return head;
+    return list;
 }
 
 void processFile(const char *filePath) {
@@ -103,7 +101,7 @@ void processFile(const char *filePath) {
         return;
     }
 
-    countWords(fileDesc, filePath);
+    wordObj *list = countWords(fileDesc, filePath);
     close(fileDesc);
 }
 
