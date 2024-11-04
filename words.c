@@ -7,7 +7,7 @@
 #include <sys/stat.h>
 #include <string.h>
 
-#define VALIDCHAR(current) ((strcmp(current, "'") == 0 && isalpha(current+1)!=0) || isalpha(current)!=0)
+#define VALIDCHAR(current) ((strcmp(current, "\'") == 0 && isalpha(current+1)!=0) || isalpha(current)!=0)
 
 struct wordObj
 {
@@ -19,7 +19,7 @@ struct wordObj
 wordObj* countWords(int fileDesc, const char *filename)
 {
     char current;
-    wordObj *head = (wordObj*)malloc(sizeof(wordObj);
+    wordObj *head = (wordObj*)malloc(sizeof(wordObj));
     wordObj *temp = head;
     
     while (read(fileDesc, &current, 1) == 1) 
@@ -38,7 +38,7 @@ wordObj* countWords(int fileDesc, const char *filename)
         //add each character to string
         while ((read(fileDesc, &current, 1) == 1) && (current == '-' || VALIDCHAR(current)))
         {
-            if((current = '-' && (isalpha(current-1) != 0 && isalpha(current+1) != 0)) || VALIDCHAR(current))
+            if((current == '-' && (isalpha(current-1) != 0 && isalpha(current+1) != 0)) || VALIDCHAR(current))
             {
                 wordSize++;
                 char *tempStr = realloc(str, wordSize+1);
