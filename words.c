@@ -9,17 +9,17 @@
 
 #define VALIDCHAR(current) ((strcmp(current, "'") == 0 && isalpha(current+1)!=0) || isalpha(current)!=0)
 
-struct word
+struct wordObj
 {
     char* str;
-    int count = 0;
-    word *next;
+    int count;
+    wordObj *next;
 };
 
 wordObj* countWords(int fileDesc, const char *filename)
 {
     char current;
-    wordObj *head;
+    wordObj *head = (wordObj*)malloc(sizeof(wordObj);
     wordObj *temp = head;
     
     while (read(fileDesc, &current, 1) == 1) 
@@ -36,26 +36,34 @@ wordObj* countWords(int fileDesc, const char *filename)
             continue;
 
         //add each character to string
-        while ((read(fileDesc, &current, 1) == 1) && (strcmp(current, "-") == 0 || VALIDCHAR(current)))
+        while ((read(fileDesc, &current, 1) == 1) && (current == '-' || VALIDCHAR(current)))
         {
-            if((strcmp(current,"-") == 0 && (isalpha(current-1) != 0 && isalpha(current+1) != 0)) || VALIDCHAR(current))
+            if((current = '-' && (isalpha(current-1) != 0 && isalpha(current+1) != 0)) || VALIDCHAR(current))
             {
                 wordSize++;
                 char *tempStr = realloc(str, wordSize+1);
-                strncat(tempStr, current, 1);
+                
+                //allocation failure
+                if(tempStr == NULL)
+                {
+                    free(str);
+                    break;
+                }
+                str = tempStr;
+                str[wordSize-1] = current;
             }
             else
                 break;
         }
         //last char of string is NULL
-        str[wordSize] = NULL;
+        str[wordSize] = '\0';
 
         //creating linkedlist
         //if list is empty
         if(head == NULL)
         {
             temp->word = str;
-            temp->count++;
+            temp->count = 1;
         }
 
         //check for repeat words
@@ -69,10 +77,20 @@ wordObj* countWords(int fileDesc, const char *filename)
                     iter->count++;
                     break;
                 }
+                    
+                else
                 iter = iter->next;
             }
-            iter->next->str = str;
-            iter->next->count++;
+            
+            //at the end of the list
+            if(iter==NULL)
+            {
+                wordObj *w = (wordObj*)malloc(sizeof(wordObj));
+                w->str = str;
+                w->count = 1;
+                w->next = NULL;
+                iter = w;
+            }
         }
     }
     return head;
@@ -144,4 +162,3 @@ int main(int argc, char *argv[]) {
 
     return 0;
 }
-
