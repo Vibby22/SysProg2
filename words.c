@@ -29,10 +29,10 @@ int compareWords(const void *a, const void *b)
     return strcmp(wordA->str, wordB->str);
 }
 
-wordObj* countWords(int fileDesc, const char *filename)
+struct wordObj* countWords(int fileDesc, const char *filename)
 {
     char current;
-    wordObj *list = (wordObj*)malloc(sizeof(wordObj));
+    struct wordObj *list = (wordObj*)malloc(sizeof(wordObj));
     int listSize = 0;
     
     while (read(fileDesc, &current, 1) == 1) 
@@ -91,7 +91,7 @@ wordObj* countWords(int fileDesc, const char *filename)
                 }
             }
             // no identical words
-            wordObj *temp = realloc(list, sizeof(wordObj)*(listSize+1));
+            struct wordObj *temp = realloc(list, sizeof(struct wordObj)*(listSize+1));
             if(temp == NULL)
             {
                 free(list);
@@ -117,7 +117,7 @@ void processFile(const char *filePath) {
 
     int listSize;
     
-    wordObj *list = countWords(fileDesc, filePath);
+    struct wordObj *list = countWords(fileDesc, filePath);
     close(fileDesc);
     if(list == NULL)
         return;
