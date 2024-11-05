@@ -82,32 +82,36 @@ struct wordObj* countWords(int fileDesc, const char *filename)
         }
 
         // list is not empty, traverse for identical words
-        else
+        else 
         {
+            int identical = 0;
             for(int i=0; i<listSize; i++)
             {
                 if(strcmp(list[i].str, str) == 0)
                 {
                     list[i].count++;
-                    free(str);
+                    identical = 0;
                     break;
                 }
             }
             // no identical words
-            struct wordObj *temp = realloc(list, sizeof(struct wordObj)*(listSize+1));
-            // if(temp == NULL)
-            // {
-            //     free(list);
-            //     free(str);
-            //     perror("Allocation failed");
-            //     return NULL;
-            // }
-
-            list = temp;
-            list[listSize].str = str;
-            list[listSize].count = 1;
-            listSize++;
-            //printf("%s : %d\n", list[listSize].str, list[listSize].count);
+            if(!identical)
+            {
+                struct wordObj *temp = realloc(list, sizeof(struct wordObj)*(listSize+1));
+                // if(temp == NULL)
+                // {
+                //     free(list);
+                //     free(str);
+                //     perror("Allocation failed");
+                //     return NULL;
+                // }
+    
+                list = temp;
+                list[listSize].str = str;
+                list[listSize].count = 1;
+                listSize++;
+                //printf("%s : %d\n", list[listSize].str, list[listSize].count);
+            }
         }
     }
     lSize = listSize;
