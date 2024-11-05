@@ -8,8 +8,8 @@ struct wordObj* countWords(int fileDesc, const char *filename) {
         char *str = calloc(1, 1);  // Start with an empty string and allocate 1 byte
 
         // Check if current character can start a word
-        if (isalpha(current)) {
-            wordSize = 1;
+        if (isalpha(current) || (current == '\'' && isalpha(prev)) {
+            wordSize++;
             char *tempStr = realloc(str, wordSize + 1); // Resize for 1 character + null
             if (tempStr == NULL) {
                 free(str);
@@ -26,7 +26,7 @@ struct wordObj* countWords(int fileDesc, const char *filename) {
         }
 
         // Build the word by reading additional characters
-        while (read(fileDesc, &current, 1) == 1 && (isalpha(current) || current == '-')) {
+        while (read(fileDesc, &current, 1) == 1 && (isalpha(current) || current '\'' || current == '-')) {
             if (current == '-' && !isalpha(prev)) {
                 break;  // Only allow `-` when surrounded by letters
             }
