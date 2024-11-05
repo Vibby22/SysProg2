@@ -40,7 +40,7 @@ struct wordObj* countWords(int fileDesc, const char *filename) {
         char *str = calloc(1, 1);  // Start with an empty string and allocate 1 byte
 
         // Check if current character can start a word
-        if (isalpha(current) || (current == '\'' && read(fileDesc, &current, 1)==1 && isalpha(current))) {
+        if (isalpha(current)) {
             wordSize++;
             char *tempStr = realloc(str, wordSize + 1); // Resize for 1 character + null
             if (tempStr == NULL) {
@@ -51,7 +51,19 @@ struct wordObj* countWords(int fileDesc, const char *filename) {
             str = tempStr;
             str[wordSize - 1] = current; // Append current character
             str[wordSize] = '\0';         // Null-terminate
-        } else {
+        } 
+        else if (current = '\'') {
+            prev = current;
+            if(read(fileDesc, &current, 1)==1 && isalpha(current)) {
+                wordSize = 2;
+                str = realloc(str, wordSize+1);
+                str[wordSize-2] = prev;
+                str[wordSize-1] = current;
+                str[wordSize] = '\0';
+            }
+            
+        }
+        else {
             prev = current;
             free(str);
             continue;
