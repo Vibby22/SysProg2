@@ -1,5 +1,5 @@
 struct wordObj* countWords(int fileDesc, const char *filename) {
-    char current, prev = '\0';  // Initialize `prev` to track previous character
+    char current, prev = '\0';  // Track previous character to handle word boundaries
     struct wordObj *list = NULL;
     int listSize = 0;
 
@@ -7,17 +7,18 @@ struct wordObj* countWords(int fileDesc, const char *filename) {
         int wordSize = 0;
         char *str = calloc(1, 1);  // Start with an empty string and allocate 1 byte
 
-        // Check if current character can start a word
-        if (isalpha(current) || (current == '\'' && isalpha(prev)) {
-            wordSize++;
-            char *tempStr = realloc(str, wordSize + 1); // Resize for 1 character + null
+        // **Start a Word if the Character is Alphabetic or a Leading Apostrophe**
+        if (isalpha(current) || (current == '\'' && read(fileDesc, &current, 1) == 1 && isalpha(current))) {
+            // Allocate space and append the starting character (either alphabetic or valid apostrophe sequence)
+            wordSize = 1;
+            char *tempStr = realloc(str, wordSize + 1); 
             if (tempStr == NULL) {
                 free(str);
                 perror("Allocation failed.");
                 return NULL;
             }
             str = tempStr;
-            str[wordSize - 1] = current; // Append current character
+            str[wordSize - 1] = current; // Append the initial character
             str[wordSize] = '\0';         // Null-terminate
         } else {
             prev = current;
@@ -25,13 +26,17 @@ struct wordObj* countWords(int fileDesc, const char *filename) {
             continue;
         }
 
-        // Build the word by reading additional characters
-        while (read(fileDesc, &current, 1) == 1 && (isalpha(current) || current '\'' || current == '-')) {
+        // **Build the Word, Allowing Apostrophes Only if Surrounded by Letters**
+        while (read(fileDesc, &current, 1) == 1 && (isalpha(current) || current == '\'' || current == '-')) {
             if (current == '-' && !isalpha(prev)) {
-                break;  // Only allow `-` when surrounded by letters
+                break;  // Only allow `-` if it’s surrounded by letters
             }
+            if (current == '\'' && (!isalpha(prev) || !isalpha(current))) {
+                break;  // Only allow `'` if surrounded by letters
+            }
+
             wordSize++;
-            char *tempStr = realloc(str, wordSize + 1); // Resize for each new character
+            char *tempStr = realloc(str, wordSize + 1); // Resize to accommodate the new character
             if (tempStr == NULL) {
                 free(str);
                 perror("Allocation failed.");
@@ -43,18 +48,19 @@ struct wordObj* countWords(int fileDesc, const char *filename) {
             prev = current;
         }
 
-        // Trim trailing hyphens
-        while (wordSize > 0 && str[wordSize - 1] == '-') {
+        // **Remove Any Trailing Apostrophes or Hyphens**
+        // If the word ends with an apostrophe or hyphen, trim it
+        while (wordSize > 0 && (str[wordSize - 1] == '-' || str[wordSize - 1] == '\'')) {
             str[--wordSize] = '\0';
         }
 
-        // If the word is empty after trimming, continue
+        // **Skip Empty Words after Trimming**
         if (wordSize == 0) {
             free(str);
             continue;
         }
 
-        // Check if word already exists in list
+        // **Check if Word Exists in List and Update Count if Found**
         int found = 0;
         for (int i = 0; i < listSize; i++) {
             if (strcmp(list[i].str, str) == 0) {
@@ -65,7 +71,7 @@ struct wordObj* countWords(int fileDesc, const char *filename) {
             }
         }
 
-        // Add new word if not found
+        // **Add New Word to List if Not Found**
         if (!found) {
             struct wordObj *tempList = realloc(list, sizeof(struct wordObj) * (listSize + 1));
             if (tempList == NULL) {
