@@ -39,10 +39,15 @@ struct wordObj* countWords(int fileDesc, const char *filename)
     while (read(fileDesc, &current, 1) == 1) 
     {
         //sets prev and next chars
-        if((&current-1) !=NULL)
-            prev = *(&current-1);
-        if((&current+1) != NULL)
-            next = *(&current+1);
+        char* pr;
+        char* ne;
+        pr = &current-1;
+        ne = &current+1;
+
+        if(pr !=NULL)
+            prev = *pr;
+        if(ne != NULL)
+            next = *ne;
         
         int wordSize = 1;
         char *str = calloc(2, wordSize+1);
@@ -58,7 +63,7 @@ struct wordObj* countWords(int fileDesc, const char *filename)
         //add each character to string
         while ((read(fileDesc, &current, 1) == 1) && (current == '-' || VALIDCHAR(current, prev)))
         {
-            if((current == '-' && (isalpha(prev) != 0 && isalpha(next) != 0) && &prev!=NULL && &next!=NULL) || VALIDCHAR(current, prev))
+            if((current == '-' && (isalpha(prev) != 0 && isalpha(next) != 0) && prev!='\0' && next!='\0') || VALIDCHAR(current, prev))
             {
                 wordSize++;
                 char *tempStr = realloc(str, wordSize+1);
