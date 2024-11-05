@@ -7,7 +7,7 @@
 #include <sys/stat.h>
 #include <string.h>
 
-#define VALIDCHAR(current, prev) (current == '\'' && (isalpha(prev)!=0 || isalpha(current)!=0))
+#define VALIDCHAR(current, prev) ((current == '\'' && isalpha(prev)!=0) || isalpha(current)!=0)
 
 int lSize = 0;
 struct wordObj
@@ -32,57 +32,53 @@ int compareWords(const void *a, const void *b)
 
 struct wordObj* countWords(int fileDesc, const char *filename)
 {
-    char current, prev, next;
+    char current, prev;
     struct wordObj *list = NULL;
     int listSize = 0;
     
     while (read(fileDesc, &current, 1) == 1) 
     {
-        //sets prev and next chars
-        char* pr;
-        char* ne;
-        pr = &current-1;
-        ne = &current+1;
-
-        if(pr !=NULL)
-            prev = *pr;
-        if(ne != NULL)
-            next = *ne;
-        
+        //sets prev and next chars    
         int wordSize = 1;
         char *str = calloc(2, wordSize+1);
         
        //check for valid first char, else reiterate loop
-        if(VALIDCHAR(current, prev)!=0)
+        if(isalpha(current))
         {
             str[0] = current;
         }
         else
+        {
+            //if first char is invalid, make prev first;
+            prev = current;
             continue;
+        }
 
         //add each character to string
         while ((read(fileDesc, &current, 1) == 1) && (current == '-' || VALIDCHAR(current, prev)))
         {
-            if((current == '-' && (isalpha(prev) != 0 && isalpha(next) != 0) && prev!='\0' && next!='\0') || VALIDCHAR(current, prev))
+            //current is preceded by letter
+            if(isalpha(current) || (current == '-' && isalpha(prev)))
             {
                 wordSize++;
                 char *tempStr = realloc(str, wordSize+1);
-                
-                //allocation failure
-                // if(tempStr == NULL)
-                // {
-                //     free(str);
-                //     perror("Allocation failed.");
-                //     return NULL;
-                // }
                 str = tempStr;
                 str[wordSize-1] = current;
             }
+            prev = current;
         }
-        //last char of string is NULL
-        str[wordSize] = '\0';
+        
+        while(wordSize>0 && str[wordSize-1] == '-')
+            str[--wordSize] = '\0';
+        //last char is NULL
 
-
+        //if wordSize is empty
+        if(wordSize == 0)
+        {
+            free(str);
+            continue;
+        }
+        
         //if list is empty
         if(list == NULL)
         {
@@ -109,14 +105,7 @@ struct wordObj* countWords(int fileDesc, const char *filename)
             if(!identical)
             {
                 struct wordObj *temp = realloc(list, sizeof(struct wordObj)*(listSize+1));
-                // if(temp == NULL)
-                // {
-                //     free(list);
-                //     free(str);
-                //     perror("Allocation failed");
-                //     return NULL;
-                // }
-    
+
                 list = temp;
                 list[listSize].str = str;
                 list[listSize].count = 1;
