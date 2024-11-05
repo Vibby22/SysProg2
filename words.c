@@ -7,8 +7,9 @@
 #include <sys/stat.h>
 #include <string.h>
 
-#define VALIDCHAR(current, next) ((current == '\'' && isalpha(next)!=0) || isalpha(current)!=0)
+#define VALIDCHAR(current) ((current == '\'' && isalpha(*(&current+1))!=0) || isalpha(current)!=0)
 
+int lSize = 0;
 struct wordObj
 {
     char* str;
@@ -32,18 +33,14 @@ int compareWords(const void *a, const void *b)
 struct wordObj* countWords(int fileDesc, const char *filename)
 {
     char current;
-    char prev, next;
-    struct wordObj *list = malloc(sizeof(struct wordObj));
+    struct wordObj *list = NULL;
     int listSize = 0;
     
     while (read(fileDesc, &current, 1) == 1) 
     {
         int wordSize = 1;
         char *str = calloc(2, wordSize+1);
-        if(&current-1 != 0)
-            &prev = &current-1;
-        if(&current+1 !=0)
-            &next = &current+1;
+        
        //check for valid first char, else reiterate loop
         if(VALIDCHAR(current)!=0)
         {
@@ -53,21 +50,20 @@ struct wordObj* countWords(int fileDesc, const char *filename)
             continue;
 
         //add each character to string
-        while ((read(fileDesc, &current, 1) == 1) && (current == '-' || VALIDCHAR(current, prev)))
+        while ((read(fileDesc, &current, 1) == 1) && (current == '-' || VALIDCHAR(current)))
         {
-            
-            if((current == '-' && (isalpha(prev) != 0 && isalpha(next) != 0) && *prev!=NULL && *next!=NULL) || VALIDCHAR(current, prev))
+            if((current == '-' && (isalpha(*(&current-1)) != 0 && isalpha(*(&current+1)) != 0)) || VALIDCHAR(current))
             {
                 wordSize++;
                 char *tempStr = realloc(str, wordSize+1);
                 
                 //allocation failure
-                if(tempStr == NULL)
-                {
-                    free(str);
-                    perror("Allocation failed.");
-                    return NULL;
-                }
+                // if(tempStr == NULL)
+                // {
+                //     free(str);
+                //     perror("Allocation failed.");
+                //     return NULL;
+                // }
                 str = tempStr;
                 str[wordSize-1] = current;
             }
@@ -75,9 +71,11 @@ struct wordObj* countWords(int fileDesc, const char *filename)
         //last char of string is NULL
         str[wordSize] = '\0';
 
+
         //if list is empty
         if(list == NULL)
         {
+            list = malloc(sizeof(struct wordObj));
             list[0].str = str;
             list[0].count = 1;
             listSize++;
@@ -97,19 +95,22 @@ struct wordObj* countWords(int fileDesc, const char *filename)
             }
             // no identical words
             struct wordObj *temp = realloc(list, sizeof(struct wordObj)*(listSize+1));
-            if(temp == NULL)
-            {
-                free(list);
-                free(str);
-                perror("Allocation failed");
-                return NULL;
-            }
+            // if(temp == NULL)
+            // {
+            //     free(list);
+            //     free(str);
+            //     perror("Allocation failed");
+            //     return NULL;
+            // }
 
             list = temp;
             list[listSize].str = str;
             list[listSize].count = 1;
+            listSize++;
+            //printf("%s : %d\n", list[listSize].str, list[listSize].count);
         }
     }
+    lSize = listSize;
     return list;
 }
 
@@ -119,29 +120,22 @@ void processFile(const char *filePath) {
         perror("Error: Unable to open file");
         return;
     }
-
-    int listSize;
     
     struct wordObj *list = countWords(fileDesc, filePath);
     close(fileDesc);
     if(list == NULL)
         return;
 
-    listSize = 0;
-    while(list[listSize]!=NULL)
-    {
-        listSize++;
-    }
+    printf("%d\n", lSize);
+    //qsort(list, lSize, sizeof(struct wordObj), compareWords);
     
-    qsort(list, listSize, sizeof(struct wordObj), compareWords);
-    
-    for(int i=0;i<listSize; i++)
+    for(int i=0;i<lSize; i++)
     {
         printf("%s: %d\n", list[i].str, list[i].count);
-        free list[i].str;
+        //free (temp.str);
     }
 
-    printf("%d distinct words.\n", listSize);
+    printf("%d distinct words.\n", lSize);
     free(list);
 }
 
