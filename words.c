@@ -40,7 +40,7 @@ struct wordObj* countWords(int fileDesc, const char *filename) {
         char *str = calloc(1, 1);  // Start with an empty string and allocate 1 byte
 
         // Check if current character can start a word
-        if (isalpha(current) || (current == '\'' && read(fileDesc, &current, 1) ==1 && isalpha(current)) {
+        if (isalpha(current) || (current == '\'' && read(fileDesc, &current, 1)==1 && isalpha(current))) {
             wordSize++;
             char *tempStr = realloc(str, wordSize + 1); // Resize for 1 character + null
             if (tempStr == NULL) {
@@ -63,10 +63,12 @@ struct wordObj* countWords(int fileDesc, const char *filename) {
                 break;  // Only allow `-` when surrounded by letters
             }
 
-            if (current == '\'' && (!isalpha(prev) || !isalpha(current))) {
+            // if multiple apostrophes in a row, break string
+            if(current == '\'' && prev == '\'')
                 break;
-            }
+
             wordSize++;
+         
             char *tempStr = realloc(str, wordSize + 1); // Resize for each new character
             if (tempStr == NULL) {
                 free(str);
@@ -80,7 +82,7 @@ struct wordObj* countWords(int fileDesc, const char *filename) {
         }
 
         // Trim trailing hyphens
-        while (wordSize > 0 && (str[wordSize - 1] == '-' || (str[wordSize-2] == '\'' && str[wordSize-1] == '\'')) {
+        while (wordSize > 0 && str[wordSize - 1] == '-') {
             str[--wordSize] = '\0';
         }
 
