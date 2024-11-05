@@ -131,12 +131,14 @@ void processFile(const char *filePath) {
         return;
 
     printf("%d\n", lSize);
-    //qsort(list, lSize, sizeof(struct wordObj), compareWords);
+    qsort(list, lSize, sizeof(struct wordObj), compareWords);
+
     
     for(int i=0;i<lSize; i++)
     {
+        struct wordObj *temp = list[i];
         printf("%s: %d\n", list[i].str, list[i].count);
-        //free (temp.str);
+        free (temp.str);
     }
 
     printf("%d distinct words.\n", lSize);
