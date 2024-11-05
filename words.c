@@ -7,24 +7,111 @@
 #include <sys/stat.h>
 #include <string.h>
 
-int countWords(int fileDesc, const char *filename) {
-    int words = 0;
-    char current;
-    int inWord = 0;
+#define VALIDCHAR(current) ((current == '\'' && isalpha(*(&current+1))!=0) || isalpha(current)!=0)
 
-    while (read(fileDesc, &current, 1) == 1) {
-        if (isspace(current)) {
-            inWord = 0;
-        } else {
-            if (!inWord) {
-                words++;
-                inWord = 1;
-            }
-        }
+int lSize = 0;
+struct wordObj
+{
+    char* str;
+    int count;
+};
+
+int compareWords(const void *a, const void *b) 
+{
+    const struct wordObj *wordA = (const struct wordObj *)a;
+    const struct wordObj *wordB = (const struct wordObj *)b;
+
+    // Sort by count in descending order
+    if (wordA->count != wordB->count) {
+        return wordB->count - wordA->count; // Descending order
     }
 
-    printf("Word count for %s: %d\n", filename, words);
-    return 0;
+    // If counts are the same, sort by str lexicographically
+    return strcmp(wordA->str, wordB->str);
+}
+
+struct wordObj* countWords(int fileDesc, const char *filename)
+{
+    char current;
+    struct wordObj *list = NULL;
+    int listSize = 0;
+    
+    while (read(fileDesc, &current, 1) == 1) 
+    {
+        int wordSize = 1;
+        char *str = calloc(2, wordSize+1);
+        
+       //check for valid first char, else reiterate loop
+        if(VALIDCHAR(current)!=0)
+        {
+            str[0] = current;
+        }
+        else
+            continue;
+
+        //add each character to string
+        while ((read(fileDesc, &current, 1) == 1) && (current == '-' || VALIDCHAR(current)))
+        {
+            if((current == '-' && (isalpha(*(&current-1)) != 0 && isalpha(*(&current+1)) != 0)) || VALIDCHAR(current))
+            {
+                wordSize++;
+                char *tempStr = realloc(str, wordSize+1);
+                
+                //allocation failure
+                if(tempStr == NULL)
+                {
+                    free(str);
+                    perror("Allocation failed.");
+                    return NULL;
+                }
+                str = tempStr;
+                str[wordSize-1] = current;
+            }
+        }
+        //last char of string is NULL
+        str[wordSize] = '\0';
+
+
+        //if list is empty
+        if(list == NULL)
+        {
+            list = malloc(sizeof(struct wordObj));
+            list[0].str = str;
+            list[0].count = 1;
+            listSize++;
+        }
+
+        // list is not empty, traverse for identical words
+        else
+        {
+            for(int i=0; i<listSize; i++)
+            {
+                if(strcmp(list[i].str, str) == 0)
+                {
+                    list[i].count++;
+                    free(str);
+                    break;
+                }
+            }
+            // no identical words
+            struct wordObj *temp = realloc(list, sizeof(struct wordObj)*(listSize+1));
+            // if(temp == NULL)
+            // {
+            //     free(list);
+            //     free(str);
+            //     perror("Allocation failed");
+            //     return NULL;
+            // }
+
+            list = temp;
+            list[listSize].str = str;
+            list[listSize].count = 1;
+            listSize++;
+            //printf("%s : %d\n", list[listSize].str, list[listSize].count);
+        }
+    }
+    lSize = listSize;
+    return list;
 }
 
 void processFile(const char *filePath) {
@@ -34,8 +121,25 @@ void processFile(const char *filePath) {
         return;
     }
 
-    countWords(fileDesc, filePath);
+    int listSize;
+    
+    struct wordObj *list = countWords(fileDesc, filePath);
     close(fileDesc);
+    if(list == NULL)
+        return;
+
+    printf("%d\n", lSize);
+    //qsort(list, lSize, sizeof(struct wordObj), compareWords);
+    
+    for(int i=0;i<lSize; i++)
+    {
+        printf("%s: %d\n", list[i].str, list[i].count);
+        struct wordObj temp = list[i];
+        free (temp.str);
+    }
+
+    printf("%d distinct words.\n", lSize);
+    free(list);
 }
 
 void processDirectory(const char *dirPath) {
@@ -93,4 +197,3 @@ int main(int argc, char *argv[]) {
 
     return 0;
 }
-
