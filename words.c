@@ -7,7 +7,7 @@
 #include <sys/stat.h>
 #include <string.h>
 
-#define VALIDCHAR(current) ((current == '\'' && isalpha(*(&current+1))!=0) || isalpha(current)!=0)
+#define VALIDCHAR(current, prev) (current == '\'' && (isalpha(prev)!=0 || isalpha(current)!=0))
 
 int lSize = 0;
 struct wordObj
@@ -32,17 +32,23 @@ int compareWords(const void *a, const void *b)
 
 struct wordObj* countWords(int fileDesc, const char *filename)
 {
-    char current;
+    char current, prev, next;
     struct wordObj *list = NULL;
     int listSize = 0;
     
     while (read(fileDesc, &current, 1) == 1) 
     {
+        //sets prev and next chars
+        if(*(&current-1) !=NULL)
+            prev = &current-1;
+        if(*(&current+1) != NULL)
+            next = &current+1;
+        
         int wordSize = 1;
         char *str = calloc(2, wordSize+1);
         
        //check for valid first char, else reiterate loop
-        if(VALIDCHAR(current)!=0)
+        if(VALIDCHAR(current, prev)!=0)
         {
             str[0] = current;
         }
@@ -50,9 +56,9 @@ struct wordObj* countWords(int fileDesc, const char *filename)
             continue;
 
         //add each character to string
-        while ((read(fileDesc, &current, 1) == 1) && (current == '-' || VALIDCHAR(current)))
+        while ((read(fileDesc, &current, 1) == 1) && (current == '-' || VALIDCHAR(current, prev)))
         {
-            if((current == '-' && (isalpha(*(&current-1)) != 0 && isalpha(*(&current+1)) != 0)) || VALIDCHAR(current))
+            if((current == '-' && (isalpha(prev) != 0 && isalpha(next) != 0)) || VALIDCHAR(current, prev))
             {
                 wordSize++;
                 char *tempStr = realloc(str, wordSize+1);
