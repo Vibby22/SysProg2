@@ -30,88 +30,89 @@ int compareWords(const void *a, const void *b)
     return strcmp(wordA->str, wordB->str);
 }
 
-struct wordObj* countWords(int fileDesc, const char *filename)
-{
-    char current, prev;
+struct wordObj* countWords(int fileDesc, const char *filename) {
+    char current, prev = '\0';  // Initialize `prev` to track previous character
     struct wordObj *list = NULL;
     int listSize = 0;
-    
-    while (read(fileDesc, &current, 1) == 1) 
-    {
-        //sets prev and next chars    
-        int wordSize = 1;
-        char *str = calloc(2, wordSize+1);
-        
-       //check for valid first char, else reiterate loop
-        if(isalpha(current))
-        {
-            str[0] = current;
-        }
-        else
-        {
-            //if first char is invalid, make prev first;
-            prev = current;
-            continue;
-        }
 
-        //add each character to string
-        while ((read(fileDesc, &current, 1) == 1) && (current == '-' || VALIDCHAR(current, prev)))
-        {
-            //current is preceded by letter
-            if(isalpha(current) || (current == '-' && isalpha(prev)))
-            {
-                wordSize++;
-                char *tempStr = realloc(str, wordSize+1);
-                str = tempStr;
-                str[wordSize-1] = current;
+    while (read(fileDesc, &current, 1) == 1) {
+        int wordSize = 0;
+        char *str = calloc(1, 1);  // Start with an empty string and allocate 1 byte
+
+        // Check if current character can start a word
+        if (isalpha(current) || (current == '\'' && isalpha(prev)) {
+            wordSize++;
+            char *tempStr = realloc(str, wordSize + 1); // Resize for 1 character + null
+            if (tempStr == NULL) {
+                free(str);
+                perror("Allocation failed.");
+                return NULL;
             }
+            str = tempStr;
+            str[wordSize - 1] = current; // Append current character
+            str[wordSize] = '\0';         // Null-terminate
+        } else {
             prev = current;
-        }
-        
-        while(wordSize>0 && str[wordSize-1] == '-')
-            str[--wordSize] = '\0';
-        //last char is NULL
-
-        //if wordSize is empty
-        if(wordSize == 0)
-        {
             free(str);
             continue;
         }
-        
-        //if list is empty
-        if(list == NULL)
-        {
-            list = malloc(sizeof(struct wordObj));
-            list[0].str = str;
-            list[0].count = 1;
-            listSize++;
+
+        // Build the word by reading additional characters
+        while (read(fileDesc, &current, 1) == 1 && (isalpha(current) || current '\'' || current == '-')) {
+            if (current == '-' && !isalpha(prev)) {
+                break;  // Only allow `-` when surrounded by letters
+            }
+            wordSize++;
+            char *tempStr = realloc(str, wordSize + 1); // Resize for each new character
+            if (tempStr == NULL) {
+                free(str);
+                perror("Allocation failed.");
+                return NULL;
+            }
+            str = tempStr;
+            str[wordSize - 1] = current; // Append current character
+            str[wordSize] = '\0';         // Null-terminate
+            prev = current;
         }
 
-        // list is not empty, traverse for identical words
-        else 
-        {
-            int identical = 0;
-            for(int i=0; i<listSize; i++)
-            {
-                if(strcmp(list[i].str, str) == 0)
-                {
-                    list[i].count++;
-                    identical = 0;
-                    break;
-                }
-            }
-            // no identical words
-            if(!identical)
-            {
-                struct wordObj *temp = realloc(list, sizeof(struct wordObj)*(listSize+1));
+        // Trim trailing hyphens
+        while (wordSize > 0 && str[wordSize - 1] == '-') {
+            str[--wordSize] = '\0';
+        }
 
-                list = temp;
-                list[listSize].str = str;
-                list[listSize].count = 1;
-                listSize++;
-                //printf("%s : %d\n", list[listSize].str, list[listSize].count);
+        // If the word is empty after trimming, continue
+        if (wordSize == 0) {
+            free(str);
+            continue;
+        }
+
+        // Check if word already exists in list
+        int found = 0;
+        for (int i = 0; i < listSize; i++) {
+            if (strcmp(list[i].str, str) == 0) {
+                list[i].count++;
+                free(str);  // Free `str` if it's already in the list
+                found = 1;
+                break;
             }
+        }
+
+        // Add new word if not found
+        if (!found) {
+            struct wordObj *tempList = realloc(list, sizeof(struct wordObj) * (listSize + 1));
+            if (tempList == NULL) {
+                for (int i = 0; i < listSize; i++) {
+                    free(list[i].str);
+                }
+                free(list);
+                free(str);
+                perror("Allocation failed");
+                return NULL;
+            }
+            list = tempList;
+            list[listSize].str = str;
+            list[listSize].count = 1;
+            listSize++;
         }
     }
     lSize = listSize;
